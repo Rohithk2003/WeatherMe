@@ -190,7 +190,13 @@ async function loadWeatherData(lat, long) {
     await fetch(
         `http://www.7timer.info/bin/api.pl?lon=${long}&lat=${lat}&product=civillight&output=json`
     )
-        .then((response) => response.json())
+        .then((response) => {
+            if (response.status >= 200 && response.status <= 299) {
+                return response.json();
+            } else {
+                throw Error(response.statusText);
+            }
+        })
         .then((result) => {
             let parent = document.querySelector(".weather-list");
             for (let index in result.dataseries) {
@@ -218,6 +224,8 @@ async function loadWeatherData(lat, long) {
                    </h2><div class="temp-data"><p>Max : ${data.temp2m.max}°C</p><p>Min : ${data.temp2m.min}°C</p></div>`
                 parent.appendChild(object);
             }
+        }).catch(error => {
+            console.error('There was a problem with the Fetch operation:', error);
         });
 }
 
@@ -226,7 +234,7 @@ async function preLoadingData(lat, lng) {
     const parent = document.querySelector(".weather-list");
     removeAllChildNodes(parent);
     loader.style.display = 'flex';
-    const nextContent = await loadWeatherData(lat, lng);
+    await loadWeatherData(lat, lng);
     loader.style.display = 'none';
 }
 
@@ -248,6 +256,7 @@ function loadCityCoordinates() {
         preLoadingData(lat, lng);
     });
 }
+
 changeFocusSearch();
 setCurrentDate();
 setCurrentTime();
